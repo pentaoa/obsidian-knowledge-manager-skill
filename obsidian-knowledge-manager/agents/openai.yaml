@@ -1,0 +1,7 @@
+interface:
+  display_name: "Obsidian Knowledge Manager"
+  short_description: "Manage Obsidian vaults with or without the desktop CLI"
+  icon_small: "./assets/icon-small.png"
+  icon_large: "./assets/icon-large.png"
+  brand_color: "#6C31E3"
+  default_prompt: "Use $obsidian-knowledge-manager to organize, query, and safely update this Obsidian vault."
