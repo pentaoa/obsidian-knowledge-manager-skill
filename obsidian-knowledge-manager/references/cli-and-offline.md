@@ -1,25 +1,26 @@
-# Obsidian CLI and headless equivalents
+# Obsidian desktop, headless, and file backends
 
 ## Backend rule
 
-Obsidian CLI is bundled with recent desktop installers and connects to a running desktop process. A binary being present does not mean it is usable. Treat `obsidian version` as the connectivity check.
+The `obsidian` CLI connects to a running desktop process. The separate `ob` client runs Obsidian Sync and Publish without the desktop app. Neither replaces direct vault-file editing.
 
 Use this priority:
 
-1. CLI connected: use CLI for discovery/query/runtime validation and files for controlled bulk edits.
-2. CLI absent or disconnected: use the vault filesystem and `scripts/vault_tool.py`.
-3. Desktop-only behavior required: explain the boundary and avoid fabricating an offline result.
+1. Desktop CLI connected: use it for discovery, exact queries, and runtime validation; use files for controlled bulk edits.
+2. Headless Sync configured: pull with `ob`, operate on files with `vault_tool.py`, validate, then push with `ob`.
+3. No connected program: use the vault filesystem and `vault_tool.py` locally.
+4. Desktop-only behavior required: explain the boundary and avoid fabricating an offline result.
 
 ## Operation mapping
 
-| Intent | CLI | Headless equivalent |
+| Intent | Desktop `obsidian` | Headless/file execution |
 |---|---|---|
 | List/read notes | `files`, `read`, `folder` | `rg --files`, ordinary file reads |
 | Create/append/move/rename | `create`, `append`, `move`, `rename` | Targeted filesystem edits; update affected wikilinks after moves |
 | Search text | `search`, `search:context` | `rg` with the same folder/case constraints |
 | Read/set/remove properties | `properties`, `property:*` | `vault_tool.py property-*` |
 | Query property/tag records | `base:query`, `tag`, `tags` | `vault_tool.py query` or `base-query` |
-| List/query Bases | `bases`, `base:views`, `base:query` | Find `.base`; parse/query common filters with `base-query` |
+| List/query Bases | `bases`, `base:views`, `base:query` | Find `.base`; parse/query supported filters with `base-query` |
 | Create a Base item | `base:create` | Create a Markdown record with the view's required properties |
 | Backlinks/unresolved/orphans/deadends | matching CLI commands | `vault_tool.py audit` |
 | Tasks | `tasks`, `task` | Read/edit exact `- [ ]` lines; preserve custom statuses |
@@ -27,7 +28,21 @@ Use this priority:
 | Templates | `templates`, `template:*` | Read `.obsidian/templates.json`; copy and resolve supported placeholders |
 | Tags and aliases | `tags`, `aliases` | Parse YAML plus inline tags/wikilinks |
 | Plugins/themes/workspace | CLI runtime commands | Inspect settings only; do not claim runtime state without the app |
-| Sync/history/recovery | `sync:*`, `history:*` | No equivalent in vault files; use Git only if this vault already uses it |
+| Sync current files | desktop Sync commands | `ob sync`; `ob` does not interpret Base contents |
+| Sync/File Recovery history | desktop history commands | No headless restore command; do not claim history was checked |
+
+## Headless pull-edit-push
+
+For a linked remote vault, use a bounded cycle rather than continuous Sync during agent edits:
+
+```bash
+ob sync-status --path /path/to/vault --json
+ob sync --path /path/to/vault
+# Edit/query Markdown, YAML, and .base files here.
+ob sync --path /path/to/vault
+```
+
+If the initial sync fails, stop before editing. If the final sync fails, preserve the validated local files and report that they remain unsynced. Read [headless-sync.md](headless-sync.md) for setup, secrets, and continuous-operation guidance.
 
 ## Valuable CLI checks
 
@@ -61,3 +76,4 @@ Read JSON settings before changing them. Do not assume a conventional folder nam
 
 - Obsidian CLI: https://help.obsidian.md/cli
 - CLI command reference: https://help.obsidian.md/cli/commands
+- Obsidian Headless: https://github.com/obsidianmd/obsidian-headless

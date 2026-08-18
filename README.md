@@ -9,12 +9,13 @@
 <h1 align="center">Obsidian Knowledge Manager</h1>
 
 <p align="center">
-  A Codex skill for reliable Obsidian knowledge-base automation—with the desktop CLI when available, and directly on Markdown, YAML, and <code>.base</code> files when it is not.
+  A Codex skill for reliable Obsidian knowledge-base automation—with the desktop CLI, official Headless Sync, or directly on Markdown, YAML, and <code>.base</code> files.
 </p>
 
 <p align="center">
   <img alt="Python standard library" src="https://img.shields.io/badge/Python-standard%20library-3776AB">
   <img alt="Obsidian Bases" src="https://img.shields.io/badge/Obsidian-Bases-6C31E3">
+  <img alt="Headless Sync" src="https://img.shields.io/badge/Headless-Sync-7C3AED">
   <img alt="CLI optional" src="https://img.shields.io/badge/Obsidian%20CLI-optional-A079FF">
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-222222">
 </p>
@@ -24,18 +25,20 @@
 
 ## Why this exists
 
-Obsidian's database model is deliberately local-first: Markdown notes are the records, YAML properties are the fields, and `.base` files define views. That is excellent for longevity, but automation often breaks down on headless servers because the official Obsidian CLI belongs to the desktop application.
+Obsidian's database model is deliberately local-first: Markdown notes are the records, YAML properties are the fields, and `.base` files define views. The desktop CLI provides exact runtime behavior, while the official `ob` client now provides Sync and Publish on headless servers.
 
 This skill keeps both environments first-class:
 
 ```mermaid
 flowchart LR
-    A["Agent task"] --> B{"Obsidian CLI connected?"}
-    B -->|Yes| C["CLI discovery and runtime validation"]
-    B -->|No| D["Direct vault file backend"]
+    A["Agent task"] --> B{"Desktop CLI connected?"}
+    B -->|Yes| C["Runtime query and validation"]
+    B -->|No| D["Direct file engine"]
     C --> E["Markdown + YAML + .base"]
     D --> E
-    E --> F["Portable Obsidian vault"]
+    E --> F{"Headless Sync linked?"}
+    F -->|Yes| G["ob sync / publish"]
+    F -->|No| H["Local portable vault"]
 ```
 
 ## Capabilities
@@ -47,6 +50,8 @@ flowchart LR
 - Audit frontmatter, wikilinks, unresolved links, orphan notes, and dead ends.
 - Manage tasks, daily notes, templates, aliases, attachments, and vault settings.
 - Use Obsidian CLI for runtime-only behavior when the desktop app is present.
+- Use the official `ob` client to sync or publish without the desktop app.
+- Compose Headless Sync with the offline Base engine in a pull-edit-push workflow.
 - Fail explicitly on unsupported formulas or plugin-defined views instead of guessing.
 
 ## Install
@@ -64,6 +69,10 @@ Use $obsidian-knowledge-manager to turn my research notes into an Obsidian Base.
 
 ```text
 Use $obsidian-knowledge-manager to audit this vault on a server without Obsidian installed.
+```
+
+```text
+Use $obsidian-knowledge-manager to pull my remote vault, update its project Base, and sync it back without the desktop app.
 ```
 
 ## Headless examples
@@ -85,6 +94,17 @@ Generate a Base deterministically from a JSON specification:
 python3 "$TOOL" base-render base-spec.json research.base --force
 ```
 
+With the official [`obsidian-headless`](https://github.com/obsidianmd/obsidian-headless) client installed and linked, wrap the same Base operations in Sync:
+
+```bash
+ob sync --path /path/to/vault
+python3 "$TOOL" base-query /path/to/vault research.base --view All --format json
+# Apply and validate Base or note changes.
+ob sync --path /path/to/vault
+```
+
+The `ob` command transports the files; the bundled file engine creates, edits, and queries Bases.
+
 ## Skill layout
 
 ```text
@@ -96,13 +116,14 @@ obsidian-knowledge-manager/
 │   └── icon-small.png
 ├── references/
 │   ├── bases.md
-│   └── cli-and-offline.md
+│   ├── cli-and-offline.md
+│   └── headless-sync.md
 └── scripts/vault_tool.py
 ```
 
 ## Boundaries
 
-The file backend does not emulate workspace UI state, plugin execution, Sync/File Recovery history, arbitrary Base formulas, or plugin-defined view behavior. Use the official desktop CLI for those features. The skill preserves unsupported definitions and reports the limitation clearly.
+Headless `ob` does not execute Base or plugin logic. The file backend does not emulate workspace UI state, plugin execution, Sync/File Recovery history restoration, arbitrary Base formulas, or plugin-defined view behavior. Use the official desktop CLI for those features. The skill preserves unsupported definitions and reports the limitation clearly.
 
 ## Validation
 
