@@ -1,20 +1,24 @@
 ---
 name: obsidian-knowledge-manager
-description: Manage and automate Obsidian vaults, Markdown notes, YAML properties, tasks, links, tags, attachments, daily notes, templates, and Bases databases. Use for creating or migrating structured knowledge bases, editing or querying `.base` files, bulk property changes, vault audits, backlink or unresolved-link analysis, and Obsidian CLI workflows. Work both with the official desktop-dependent Obsidian CLI and on headless servers where only the vault files are available.
+description: Manage, automate, and sync Obsidian vaults, Markdown notes, YAML properties, tasks, links, tags, attachments, daily notes, templates, and Bases databases. Use for structured knowledge-base migrations, `.base` creation or queries, bulk property changes, vault audits, backlink or unresolved-link analysis, desktop Obsidian CLI workflows, and official Headless Sync or Publish on servers without the desktop app. Work with the desktop CLI, the `ob` headless client, or vault files alone.
 ---
 
 # Obsidian Knowledge Manager
 
-Treat the vault files as the source of truth. Use the official CLI when it is available and connected to a running Obsidian instance; otherwise operate directly on Markdown, YAML frontmatter, `.base`, JSON settings, and attachments.
+Treat the vault files as the source of truth. Use the desktop CLI for Obsidian runtime behavior, the official `ob` client for headless Sync and Publish, and direct file operations for Markdown, YAML frontmatter, `.base`, JSON settings, and attachments.
 
 ## Select the backend
 
 1. Locate the vault from the user, current directory, `.obsidian/`, or Obsidian's vault registry.
-2. Detect the CLI with `command -v obsidian`. On macOS also check `/Applications/Obsidian.app/Contents/MacOS/obsidian-cli`.
-3. Run `obsidian version`. If it cannot connect, continue with the file backend; do not block on installing or launching the desktop app.
-4. Use CLI results as runtime validation, not as the only way to edit the vault.
+2. Detect the desktop CLI with `command -v obsidian`. On macOS also check `/Applications/Obsidian.app/Contents/MacOS/obsidian-cli`. Treat it as connected only when `obsidian version` succeeds.
+3. Detect the official headless client with `command -v ob`. Treat Sync as configured only when `ob sync-status --path <vault> --json` succeeds.
+4. Select one or more backends:
+   - **Desktop runtime:** use connected `obsidian` commands for exact Base queries, plugin behavior, history, and UI-dependent operations.
+   - **Headless transport:** use `ob` for Sync or Publish without the desktop app. Continue to edit and query Bases with the file backend.
+   - **File backend:** use vault files and `scripts/vault_tool.py` when neither program is available or no remote operation is needed.
+5. Do not block local work on installing or launching Obsidian. Do not log in, link a remote vault, start continuous Sync, or change Sync configuration unless the user authorizes that remote state change.
 
-Read [references/cli-and-offline.md](references/cli-and-offline.md) when mapping a CLI operation to a headless equivalent. Read [references/bases.md](references/bases.md) before creating, restructuring, or troubleshooting a Base.
+Read [references/cli-and-offline.md](references/cli-and-offline.md) when mapping operations between backends. Read [references/headless-sync.md](references/headless-sync.md) before configuring or running `ob`. Read [references/bases.md](references/bases.md) before creating, restructuring, or troubleshooting a Base.
 
 ## Core workflow
 
@@ -27,7 +31,21 @@ Read [references/cli-and-offline.md](references/cli-and-offline.md) when mapping
    - Use `scripts/vault_tool.py base-render` when generating a Base deterministically from JSON.
    - Use `scripts/vault_tool.py base-query` for common headless Base filters.
 5. Validate the exact failure that matters. For migrations, verify expected record counts and required properties. For link work, audit unresolved targets. For Bases, parse and query every changed view.
-6. If the CLI is available, finish with `bases`, `base:query`, `properties`, or another relevant command. Otherwise report that validation used the file backend and note any unsupported runtime-only semantics.
+6. If the desktop CLI is connected, finish with `bases`, `base:query`, `properties`, or another relevant runtime check. Otherwise report that validation used the file backend and note any unsupported runtime-only semantics.
+7. When a linked Headless Sync backend is in scope, complete a one-time sync before editing, apply and validate local changes, then sync again. Stop on a failed sync rather than editing an uncertain local snapshot.
+
+## Use Headless Sync with Base operations
+
+`ob` transports vault files; it does not expose `base:*` commands or evaluate Bases. Compose it with the file backend:
+
+```bash
+ob sync --path /path/to/vault
+python3 scripts/vault_tool.py base-query /path/to/vault path/to/research.base --view All --format json
+# Apply and validate the requested file or Base changes.
+ob sync --path /path/to/vault
+```
+
+Use `ob sync --continuous` only for an explicitly requested long-running service. Avoid concurrent edits to the same note while an agent performs a pull-edit-push cycle. Keep account and end-to-end encryption secrets outside the vault, prompts, command history, and logs.
 
 ## Use the offline tool
 
@@ -70,4 +88,4 @@ Pass values as JSON to retain booleans, numbers, nulls, strings, lists, and mapp
 
 ## Boundaries
 
-The file backend cannot reproduce workspace UI state, command-palette actions, Sync history, File Recovery history, plugin execution, or every formula/plugin view. Use the official CLI or desktop app for those runtime features. Never silently approximate unsupported Base formulas; preserve them and state that only syntax/structure was checked.
+The Headless Sync client cannot execute Base queries, plugins, or UI actions. The file backend cannot reproduce workspace state, command-palette actions, Sync/File Recovery history restoration, plugin execution, or every formula/plugin view. Use the desktop CLI or app for those runtime features. Never silently approximate unsupported Base formulas; preserve them and state that only syntax/structure was checked. Sync is transport, not a substitute for an independent backup.
