@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="./assets/official/obsidian-logo-text-white-purple.svg" height="38" alt="Obsidian">
-</p>
-
-<p align="center">
-  <img src="./assets/hero.png" alt="Obsidian Knowledge Manager — notes, Bases, links, and terminal automation">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/official/obsidian-logo-text-white-purple.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./assets/official/obsidian-logo-text-black.svg">
+    <img src="./assets/official/obsidian-logo-text-black.svg" height="38" alt="Obsidian">
+  </picture>
 </p>
 
 <h1 align="center">Obsidian Knowledge Manager</h1>
